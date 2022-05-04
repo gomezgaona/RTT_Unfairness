@@ -1,5 +1,15 @@
 #!/bin/bash
 
+function ticker () {
+  #Ticker
+  n=0
+  while [ $n -le $1 ]; do
+    echo -en tick: $n "\r"
+    ((n=n+1))
+    sleep 1
+  done
+}
+
 #Hosts
 h1='/home/gomezgaj/mininet/util/m h1'
 h2='/home/gomezgaj/mininet/util/m h2'
@@ -28,11 +38,12 @@ sudo tc qdisc del dev s1-eth1 root
 
 #Setting the bottleneck 
 #sudo tc qdisc add dev s1-eth1 root handle 1: tbf rate 10gbit burst 5000000 limit 78643200 # for 60ms
-sudo tc qdisc add dev s1-eth1 root handle 1: tbf rate 1gbit burst 500000 limit 7864320 # for 60ms
+sudo tc qdisc add dev s1-eth1 root handle 1: tbf rate 10gbit burst 500000 limit 2500000 # for 60ms
+sudo tc qdisc add dev s2-eth3 root handle 1: tbf rate 10gbit burst 500000 limit 78643200 # for 60ms
 
 #Establishing RT Unfairness
-$h2 sudo tc qdisc del dev h2-eth0 root
-$h2 sudo tc qdisc add dev h2-eth0 root netem delay 60ms
+sudo tc qdisc del dev s2-eth3 root
+sudo tc qdisc add dev s2-eth3 root netem delay 60ms
 
 #Killing previous iperf3 servers
 sudo pkill iperf3 #&> /dev/null 
@@ -42,16 +53,15 @@ $h3 iperf3 -s  > /dev/null &
 $h4 iperf3 -s  > /dev/null &
 sleep 1
 
-test_duration=300
+test_duration=120
 #Starting iperf3 Clients
 echo "Starting iperf3 Clients"
-$h1 iperf3 -c 10.0.0.3 -t $test_duration -J > results/out1.json &
-$h2 iperf3 -c 10.0.0.4 -t $test_duration -J > results/out2.json &
 
-#Ticker
-i=1
-while [ $i -le $test_duration ]; do
-  echo -en tick: $i "\r"
-  ((i=i+1))
-  sleep 1
+for i in {1..1}
+do
+   $h1 iperf3 -c 10.0.0.3 -t $test_duration -J > results/h1_"$i".json &
+   $h2 iperf3 -c 10.0.0.4 -t $test_duration -J > results/h2_"$i".json &
+   
+   echo "Run: $i" 
+   ticker "$test_duration"
 done

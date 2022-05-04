@@ -1,10 +1,10 @@
 import json
 import matplotlib.pyplot as plt
 
-f = open('results/1G/single_run/bbr/out1.json')
+f = open("results/h1_1.json")
 data1 = json.load(f)
 f.close()
-f = open('results//1G/single_run/bbr/out2.json')
+f = open("results/h2_1.json")
 data2 = json.load(f)
 f.close()
 
@@ -17,12 +17,26 @@ th1 = [0 for i in range(duration)]
 th2 = [0 for i in range(duration)] 
 fairness = [0 for i in range(duration)] 
 
+'''
+for i in range (2, 10+1):
+    for j in range(0,duration):
+        th1[j] += 1/10*data1["intervals"][j]["sum"]["bits_per_second"]/(1e9)
+        th2[j] += 1/10*data2["intervals"][j]["sum"]["bits_per_second"]/(1e9)
+        fairness[j] += 1/10*100*(th1[j] + th2[j])**2 / (2 * (th1[j]**2 + th2[j]**2))
+
+f = open("results/h1_"+str(i)+".json")
+data1 = json.load(f)
+f.close()
+f = open("results/h2_"+str(i)+".json")
+data2 = json.load(f)
+f.close()    
+'''
 
 for j in range(0,duration):
     th1[j] += data1["intervals"][j]["sum"]["bits_per_second"]/(1e9)
     th2[j] += data2["intervals"][j]["sum"]["bits_per_second"]/(1e9)
-    fairness[j] = 100*(th1[j] + th2[j])**2 / (2 * (th1[j]**2 + th2[j]**2))
-    
+    fairness[j] += 100*(th1[j] + th2[j])**2 / (2 * (th1[j]**2 + th2[j]**2))
+
 #print(fairness)    
 #Plt and subplts definition
 fig, plt = plt.subplots(2, 1, sharex=True,figsize=(7,7))
@@ -49,7 +63,7 @@ plt[1].set_ylabel('Throughput [Gbps]', fontsize=14)
 plt[1].set_xlabel('Time [s]', fontsize=14)
 
 #Plot legends
-plt[0].legend(loc="upper right")
+plt[0].legend(loc="lower right")
 plt[1].legend(loc="upper right", ncol=2)
 
 #Setting the position of the y-axis labels
@@ -63,6 +77,6 @@ plt[1].tick_params(axis='x', labelsize=14 )
 
 #Setting the y-axis limits
 plt[0].set_ylim([0,100])#fairness
-plt[1].set_ylim([0,1.2])#throughput
+plt[1].set_ylim([0,10])#throughput
 
 fig.savefig("test_plot.png", bbox_inches='tight')
